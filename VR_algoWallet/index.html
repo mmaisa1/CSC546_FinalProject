@@ -1,1 +1,387 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Algorand Wallet VR Interface</title>
+  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+  <!-- Add the script tag to load the algosdk library -->
+  <script
+  src="https://cdn.jsdelivr.net/npm/algosdk@v2.7.0/dist/browser/algosdk.min.js"
+  integrity="sha384-OP8U0zDUgTdYdeyxnrhicwju6SuPxm2tx4WaTYDeP5JiMS/OyifldTK5Y3vzPK9K"
+  crossorigin="anonymous"
+  ></script>
+</head>
+<body>
+  <a-scene>
+    <!-- Algorand Wallet Interface -->
+    <a-sky src="download.jpeg"></a-sky>
+    <a-entity id="walletInterface">
+      <!-- Display Welcome Text -->
+      <a-text id="WelcomeText" value="Welcome User!" position="-0.5 3 -3" scale="2 2 2"></a-text>
 
+      <!-- Display Account Balance >
+      <a-text id="AccountAddress" value="User Account" position="-0.5 2.5 -3" scale="1 1 1"></a-text-->
+      <a-text id="Status" value="loading status..." position="-0.4 2.7 -3" scale="1 1 1"></a-text>
+
+
+      <!-- Menu for Sending and Receiving ALGO -->
+      <a-entity id="menu" position="-2 1 -3">
+        <a-entity id="sendMenuOption" geometry="primitive: box; width: 1.5; height: 0.5" material="color: blue; opacity: 0.6" position="0 -0.2 0" cursor-listener-send>
+          <a-text value="Send ALGO" color="white" align="center" position="0 0 0.5"></a-text>
+        </a-entity>
+        <a-entity id="receiveMenuOption" geometry="primitive: box; width: 1.5; height: 0.5" material="color: green; opacity: 0.6" position="0 0.3 0" cursor-listener-receive>
+          <a-text value="Receive ALGO" color="white" align="center" position="0 0 0.5"></a-text>
+        </a-entity>
+        <a-entity id="optinMenuOption" geometry="primitive: box; width: 1.5; height: 0.5" material="color: blue; opacity: 0.6" position="0 0.8 0" cursor-listener-optin>
+          <a-text value="Opt-in Asset" color="white" align="center" position="0 0 0.5"></a-text>
+        </a-entity>
+        <a-entity id="optoutMenuOption" geometry="primitive: box; width: 1.5; height: 0.5" material="color: green; opacity: 0.6" position="0 1.3 0" cursor-listener-optout>
+          <a-text value="Opt-out Asset" color="white" align="center" position="0 0 0.5"></a-text>
+        </a-entity>
+        <a-entity id="accountInfoButton" geometry="primitive: box; width: 1.5; height: 0.5" material="color: green; opacity: 0.6" position="0 -0.7 0" cursor-listener-account-info>
+          <a-text value="Account Info" color="white" align="center" position="0 0 0.5"></a-text>
+        </a-entity>
+      </a-entity>
+
+    <!-- Input Fields -->
+    <a-entity id="inputFields" position="1.1 2.1 -3">
+      <!-- Account Address Input -->
+      <a-text value="Account Address:" color="white" align="center" position="-1.2 0.2 0.5" scale="0.5 0.5 0.5"></a-text>
+      <input id="accountAddressInput" type="text" value="" style="border: 2px solid white; padding: 0.2em; width: 10em;" position="-0.5 0 0.5"></input>
+      
+      <!-- Asset ID Input -->
+      <a-text value="Asset ID:" color="white" align="center" position="-1.2 -0.2 0.5" scale="0.5 0.5 0.5"></a-text>
+      <input id="assetIDInput" type="text" value="" style="border: 2px solid white; padding: 0.2em; width: 4em;" position="-0.5 -0.4 0.5"></input>
+    </a-entity>
+
+      <!-- Card to display account information -->
+      <a-entity id="accountInfoCard" position="1.1 0.1 -3" text="align: left; color: white; width: 2">
+        <a-box position="0 0 0" depth="0.1" height="2.8" width="3" material="color: black; opacity: 0.7"></a-box>
+        <a-box position="0 0 0" depth="0.1" height="2.6" width="2.7" material="color: black; opacity: 0.3"></a-box>
+        <a-text value="Account Information" color="white" align="center" position="0 1 0.1"></a-text>
+        <a-text id="accountInfoText" value="" color="white" align="left" position="-1.2 0 0.1" wrap-count="23" scale="0.3 0.3 0.3"></a-text>
+        <a-text id="accountStatus" value="" color="white" align="left" position="-1.2 -1 0.1" wrap-count="23" scale="0.3 0.3 0.3"></a-text>
+      </a-entity>
+    </a-entity>
+  </a-scene>
+
+  <script>
+    // Initialize Algorand SDK and other functions
+    const algosdk = window.algosdk;
+
+    // Replace with your Algorand Testnet credentials
+    const token  = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    const server = "https://testnet-api.algonode.cloud/";
+    const port   = 443;
+    const algodClient = new algosdk.Algodv2(token, server, port);
+    let accountInfoText="";
+    let account_info = "";
+
+    function getInputFromConsole(promptMessage) {
+    return prompt(promptMessage);
+    }
+
+    // Get Account Information
+    async function getAccountInfo() {
+      let account_info = (await algodClient.accountInformation("NODFDSBCVNQ3LJJ5DWDOJONHEQNWORXVHHGJTTWARCTBPAIXPP7WHLMVAM").do());
+      console.log("Account Address: ", account_info);
+      let acct_string = JSON.stringify(account_info);
+      return account_info;
+    }
+
+    async function viewAssetInfo() {
+      //const assetID = getInputFromConsole("Enter the asset ID:");
+      const accountInfo = await getAccountInfo();
+      const assets = accountInfo.assets || [];
+      assets.forEach(asset => {
+        //if(asset['asset-id'] == assetID){
+          console.log("Asset ID:", asset['asset-id']);
+          console.log("Amount:", asset['amount']);
+          console.log("Is Frozen:", asset['is-frozen']);
+          console.log("--------------------");
+        //}
+      });
+    }
+    async function displayBalance() {
+      const accountInfo = await getAccountInfo();
+      Status.setAttribute('value', `fetching Account Info...`);
+      let accountInfoText = 'Address: ';
+      accountInfoText +="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" //accountInfo['address']
+
+      // Print asset IDs of all assets
+      const assets = accountInfo.assets || [];
+      if (assets.length > 0) {
+        accountInfoText += "\n\nAsset Details...\n"
+        assets.forEach(asset => {
+          accountInfoText += 'asset-id: '+asset['asset-id']+'\n'
+          //accountInfoText += '\n asset amount: *.******\n'//+asset['amount']+'\n'
+        });
+      }
+      accountInfoText += "\n\nBalance:\n"
+      accountInfoText +="*.******" //`${accountInfo.amount/1000000} ALGO`;
+
+      document.getElementById('accountInfoText').setAttribute('value', accountInfoText);
+
+    }
+
+
+    // Send ALGO Functionality
+    async function sendALGO() {
+    try {
+        const accountInfo = await getAccountInfo();
+        console.log('current balance ', accountInfo.amount);
+
+        Status.setAttribute('value', `Sending ALGO...`);
+
+        const amountToSend = 1000000; // 1 ALGO (in microAlgos)
+        const receiverAddress = 'NODFDSBCVNQ3LJJ5DWDOJONHEQNWORXVHHGJTTWARCTBPAIXPP7WHLMVAM';
+        let mnemonic1 = 'defense verify hover bridge disease thought develop protect front lady hen sign gesture impose denial fancy now decline fork minute pause gain spider about topple'; // 25-word mnemonic
+        let account1 = algosdk.mnemonicToSecretKey(mnemonic1);
+        console.log('account1: ', account1);
+
+        let params = await algodClient.getTransactionParams().do();
+console.log('params: ', params);
+
+const currentRound = params.lastRound;
+const validRounds = 1000; // Adjust as needed
+const firstRound = params.firstRound;
+const lastRound = params.lastRound; ;
+
+let txn = {
+    "from": accountInfo.address,
+    "to": receiverAddress,
+    "fee": 1000, // Fee is in microAlgos
+    "amount": amountToSend,
+    "firstRound": firstRound,
+    "lastRound": lastRound,
+    "genesisID": params.genesisID,
+    "genesisHash": params.genesisHash,
+    "note": new Uint8Array(0)
+};
+
+        //let algodstatus = algodClient.status().do();
+        //console.log("algodstatus: ", algodstatus)
+        const signedTxn = algosdk.signTransaction(txn, account1.sk);
+        const sendTx = await algodClient.sendRawTransaction(signedTxn.blob).do();
+
+        console.log("Transaction: ", sendTx);
+        console.log("Transaction ID: " + sendTx.txId);
+        
+        alert('ALGO sent successfully!');
+        let newaccountInfo = await getAccountInfo();
+        console.log('new balance ', newaccountInfo.amount);
+        document.getElementById('accountStatus').setAttribute('value', 'ALGO sent successfully!');
+    } catch (error) {
+        console.error("Error:", error);
+        alert('Failed to send ALGO. See console for details.');
+        document.getElementById('accountStatus').setAttribute('value', 'Failed to send ALGO. See console for details.');
+    }
+}
+
+    // Receive ALGO Functionality
+    async function receiveALGO() {
+      const accountInfo = await getAccountInfo();
+      //console.log('receiveALgo ', accountInfo)
+      Status.setAttribute('value', `Receiving ALGO...`);
+      const amountToReceive = 500000; // 0.5 ALGO (in microAlgos)
+      // Simulate receiving ALGO by updating the account balance
+      accountInfo.amount += amountToReceive;
+      // Update the displayed balance
+      //const balanceText = document.getElementById('Balance');
+      //balanceText.setAttribute('value', `Balance: ${accountInfo.amount/1000000} ALGO`);
+      // Display a confirmation message
+      //alert(`Received ${amountToReceive/1000000} ALGO successfully!`);
+      //Balance.setAttribute('value', ``);
+      document.getElementById('accountStatus').setAttribute('value','ALGO received successfully!');
+    }
+
+    // Opt-In to Asset Functionality
+    async function optInToAsset() {
+    try {
+        const accountInfo = await getAccountInfo();
+        //console.log('current balance ', accountInfo.amount);
+        let assetId = 652000474;
+
+        Status.setAttribute('value', `Opting in to Asset...`);
+
+        const assets = accountInfo.assets || [];
+        let alreadyOptedIn = false;
+
+  if (assets.length > 0) {
+    assets.forEach(asset => {
+    console.log('asset info : ', asset);
+    if (asset['asset-id'] == assetId){
+      console.log('Already opted in to the asset!');
+      //document.getElementById('accountStatus').setAttribute('value','Already opted in to the asset!');
+      alreadyOptedIn = true; 
+    }
+  });
+  }
+  // Print asset IDs of all assets
+ 
+
+  if (alreadyOptedIn) {
+            // Asset is already opted in, no need to proceed
+            document.getElementById('accountStatus').setAttribute('value', 'Already opted in to the asset!');
+            return;
+        }
+        else{
+          //document.getElementById('accountStatus').setAttribute('value', 'Not opted in to the asset!');
+          console.log('value', 'Not opted in to the asset!');
+        }
+        const amountToSend = 0; // Opt-in transactions typically have an amount of 0
+        const receiverAddress = accountInfo.address;
+        let mnemonic1 = 'defense verify hover bridge disease thought develop protect front lady hen sign gesture impose denial fancy now decline fork minute pause gain spider about topple'; // 25-word mnemonic
+        let account1 = algosdk.mnemonicToSecretKey(mnemonic1);
+        console.log('account1: ', account1);
+        
+
+        let params = await algodClient.getTransactionParams().do();
+        console.log('params: ', params);
+
+        const currentRound = params.lastRound;
+        const validRounds = 1000; // Adjust as needed
+        const firstRound = params.firstRound;
+        const lastRound = params.lastRound;
+
+        let txn = {
+            "from": accountInfo.address,
+            "to": accountInfo.address,
+            "fee": 1000, // Fee is in microAlgos
+            //"amount": amountToSend,
+            "firstRound": firstRound,
+            "lastRound": lastRound,
+            "genesisID": params.genesisID,
+            "genesisHash": params.genesisHash,
+            //"note": new Uint8Array(0),
+            "assetIndex": assetId, // Asset ID to opt-in to
+            "type": "optin", // Transaction type for opting in to an asset
+        };
+        console.log(txn, account1.sk);
+        const signedTxn = algosdk.signTransaction(txn, account1.sk);
+        const sendTx = await algodClient.sendRawTransaction(signedTxn.blob).do();
+
+        console.log("Transaction: ", sendTx);
+        console.log("Transaction ID: " + sendTx.txId);
+
+        alert('Opt-in to asset successful!');
+        let newAccountInfo = await getAccountInfo();
+        console.log('assets details ', newAccountInfo.assets);
+        document.getElementById('accountStatus').setAttribute('value', 'Opt-in to asset successful!');
+    } catch (error) {
+        console.error("Error:", error);
+        alert('Failed to opt-in to asset. See console for details.');
+        document.getElementById('accountStatus').setAttribute('value', 'Failed to opt-in to asset. See console for details.');
+    }
+}
+
+    // Opt-Out of Asset Functionality
+    async function optOutAsset() {
+      const accountInfo = await getAccountInfo();
+      const assetId = 123456789; // Replace with the asset ID you want to opt-out from
+      Status.setAttribute('value', `checking asset availability to optout...`);
+      // Check if the asset is already opted-in
+      const assets = accountInfo.assets || [];
+      if (assets.length === 0) {
+        //alert('No assets found in the account!');
+        document.getElementById('accountStatus').setAttribute('value','No assets found in the account!');
+        return;
+      }
+      // Check if the asset is not opted-in
+      let hasOptedin = false;
+      assets.forEach(asset => {
+        //console.log('asset info : ', asset);
+        if (asset['asset-id'] == assetId){
+          hasOptedin = true
+          return;
+        }
+      });
+      if(!hasOptedin){
+        //console.log('Asset not opted-in!');
+        document.getElementById('accountStatus').setAttribute('value','Asset not opted-in!');
+      }
+      
+      /* Find the amount of the asset held by the account
+      const assetAmount = optedInAsset.amount;
+      // Specify the recipient address for transferring the asset
+      const recipientAddress = "your-recipient-address"; // Replace with the recipient address
+      // Create the asset transfer transaction
+      const assetTransferTxn = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+        from: accountInfo.address,
+        to: recipientAddress,
+        assetIndex: assetId,
+        amount: assetAmount,
+        suggestedParams: {
+          ...(await algodClient.getTransactionParams().do())
+        }
+      });
+        // Sign the transaction with the account's secret key
+        const signedAssetTransferTxn = assetTransferTxn.signTxn(accountInfo.sk);
+        // Send the signed transaction
+        await algodClient.sendRawTransaction(signedAssetTransferTxn.blob);
+        alert('Opted out of the asset successfully!');*/
+    }
+
+    // A-Frame Component for Button Click Events
+    AFRAME.registerComponent('cursor-listener-send', {
+      init: function () {
+        const el = this.el;
+        el.addEventListener('click', function () {
+          console.log('Send button clicked');
+          sendALGO();
+        });
+      }
+    });
+
+    AFRAME.registerComponent('cursor-listener-receive', {
+      init: function () {
+        const el = this.el;
+        el.addEventListener('click', function () {
+          console.log('Receive button clicked');
+          receiveALGO();
+        });
+      }
+    });
+
+    AFRAME.registerComponent('cursor-listener-optin', {
+      init: function () {
+        const el = this.el;
+        el.addEventListener('click', function () {
+          console.log('Opt-in button clicked');
+          optInToAsset();
+        });
+      }
+    });
+
+    AFRAME.registerComponent('cursor-listener-optout', {
+      init: function () {
+        const el = this.el;
+        el.addEventListener('click', function () {
+          console.log('Opt-out button clicked');
+          optOutAsset();
+        });
+      }
+    });
+
+    AFRAME.registerComponent('cursor-listener-account-info', {
+      init: function () {
+        const el = this.el;
+        el.addEventListener('click', function () {
+          console.log('Account info button clicked');
+          // Call the function to display account information
+          displayAccountInfo();
+        });
+      }
+    });
+    // Initial Setup
+    // Example usage:
+    //const accountAddress = getInputFromConsole("Enter your account address:");
+    
+    displayBalance();
+    viewAssetInfo() 
+    optInToAsset()
+    //optOutAsset()
+    //sendALGO()
+
+  </script>
+</body>
+</html>
